@@ -1,0 +1,82 @@
+module apb_master (
+    input        PCLK,
+    input        PRESETn,
+    output reg [7:0] PADDR,
+    output reg       PWRITE,
+    output reg [7:0] PWDATA,
+    output reg       PENABLE,
+    output reg       PSEL1,
+    input      [7:0] PRDATA,
+    input            PREADY
+);
+
+    reg [3:0] state;
+    localparam IDLE  = 0,
+               SETUP = 1,
+               ENABLE_WRITE = 2,
+               WAIT_WRITE = 3,
+               SETUP_READ = 4,
+               ENABLE_READ = 5,
+               WAIT_READ = 6;
+
+    always @(posedge PCLK or negedge PRESETn) begin
+        if (!PRESETn) begin
+            state   <= IDLE;
+            PADDR   <= 8'd0;
+            PWRITE  <= 0;
+            PWDATA  <= 8'd0;
+            PENABLE <= 0;
+            PSEL1   <= 0;
+        end else begin
+            case (state)
+                IDLE: begin
+                    PADDR   <= 8'h0A;
+                    PWDATA  <= 8'h55;
+                    PWRITE  <= 1;
+                    PSEL1   <= 1;
+                    PENABLE <= 0;
+                    state   <= SETUP;
+                end
+
+                SETUP: begin
+                    PENABLE <= 1;
+                    state   <= ENABLE_WRITE;
+                end
+
+                ENABLE_WRITE: begin
+                    if (PREADY) begin
+                        PENABLE <= 0;
+                        PSEL1   <= 0;
+                        state   <= WAIT_WRITE;
+                    end
+                end
+
+                WAIT_WRITE: begin
+                    // delay one cycle
+                    state <= SETUP_READ;
+                end
+
+                SETUP_READ: begin
+                    PADDR   <= 8'h0A;
+                    PWRITE  <= 0;
+                    PSEL1   <= 1;
+                    PENABLE <= 0;
+                    state   <= ENABLE_READ;
+                end
+
+                ENABLE_READ: begin
+                    PENABLE <= 1;
+                    state   <= WAIT_READ;
+                end
+
+                WAIT_READ: begin
+                    if (PREADY) begin
+                        PENABLE <= 0;
+                        PSEL1   <= 0
+                        state   <= IDLE;
+                    end
+                end
+            endcase
+        end
+    end
+endmodule
