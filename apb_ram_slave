@@ -1,0 +1,36 @@
+module apb_ram_slave (
+    input         PCLK,
+    input         PRESETn,
+    input         PSEL1,
+    input         PENABLE,
+    input         PWRITE,
+    input  [7:0]  PADDR,
+    input  [7:0]  PWDATA,
+    output [7:0]  PRDATA,
+    output        PREADY
+);
+
+    reg [7:0] memory [255:0];
+    reg [7:0] read_data;
+    reg       ready;
+
+    assign PRDATA = read_data;
+    assign PREADY = ready;
+
+    always @(posedge PCLK or negedge PRESETn) begin
+        if (!PRESETn) begin
+            ready     <= 0;
+            read_data <= 0;
+        end else begin
+            if (PSEL1 && PENABLE) begin
+                ready <= 1;
+                if (PWRITE)
+                    memory[PADDR] <= PWDATA;
+                else
+                    read_data <= memory[PADDR];
+            end else begin
+                ready <= 0;
+            end
+        end
+    end
+endmodule
