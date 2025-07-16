@@ -1,0 +1,39 @@
+module apb_top (
+    input         clk,
+    input         resetn
+);
+
+    wire [7:0] PADDR;
+    wire [7:0] PWDATA;
+    wire [7:0] PRDATA;
+    wire       PWRITE;
+    wire       PENABLE;
+    wire       PSEL1;
+    wire       PREADY;
+
+    
+    apb_master master (
+        .PCLK(clk),
+        .PRESETn(resetn),
+        .PADDR(PADDR),
+        .PWRITE(PWRITE),
+        .PWDATA(PWDATA),
+        .PENABLE(PENABLE),
+        .PSEL1(PSEL1),
+        .PRDATA(PRDATA),
+        .PREADY(PREADY)
+    );
+
+    apb_ram_slave ram (
+        .PCLK(clk),
+        .PRESETn(resetn),
+        .PADDR(PADDR),
+        .PWRITE(PWRITE),
+        .PWDATA(PWDATA),
+        .PENABLE(PENABLE),
+        .PSEL1(PSEL1),
+        .PRDATA(PRDATA),
+        .PREADY(PREADY)
+    );
+
+endmodule
